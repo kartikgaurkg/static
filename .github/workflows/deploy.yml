@@ -1,0 +1,25 @@
+name: static-project
+on:
+  push:
+    branches:
+      - master 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: AKIAWMWA3M5MDI4SB2WQ
+      AWS_SECRET_ACCESS_KEY: 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  
+      steps:
+        - uses: actions/checkout@v2
+        - name: Deploy 
+          uses: reggionick/s3-deploy@v3
+          with:
+            folder:
+             bucket: ci-github-pro
+             bucket-region: ap-south-1
+             delete-removed: true
+             no-cache: true
+             private: true  
+
+
