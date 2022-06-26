@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters: # params passed to "--parameter-overrides" in CLI
+    BucketName: # http://ci-github-pro.ap-south-1.amazonaws.com/
+        Description: Unique name for your bucket. This will be in the S3 url to your static website.
+        Type: String
+
+Resources:
+    # Create an S3 Bucket that serves a static website (i.e. React app)
+    MyBucket:
+        Type: AWS::S3::Bucket
+        Properties:
+            BucketName: ci-github-pro
+            AccessControl: PublicRead # important!!
+            WebsiteConfiguration: # this makes the S3 Bucket a static website/app
+                IndexDocument: index.html # default object served when visiting S3 domain
+                ErrorDocument: index.html # just send to app, let React handle errors and routing
+    # Add a Bucket Policy that lets public visitors access the web app
+    MyBucketPolicy:
+        Type: AWS::S3::BucketPolicy
+        Properties:
+            Bucket: ci-github-pro # attach to bucket being created
+            PolicyDocument:
+                Id: MyPolicy
+                Version: 2012-10-17
+                Statement: # lets the public access/view the contents of your Bucke t, i.e. web app
+                    - Sid: PublicReadForGetBucketObjects
+                      Effect: Allow
+                      Principal: "*" # wildcard, allow all requests
+                      Action: "s3:GetObject"
+                      Resource: 
+                        - !Join ["", [!GetAtt MyBucket.Arn, /*]]
+    iamUser:
+        Type: AWS::IAM::User
+        Properties:
+            Path: /
+            Policies:
+                - PolicyName: s3-upload-policy
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action:
+                                - "s3:PutObject"
+                                - "s3:GetObject"
+                                - "s3:ListBucket"
+                                - "s3:DeleteObject"
+                            Resource:
+                                - !Join ["", [!GetAtt MyBucket.Arn, /*]]
+
+Outputs:
+    WebsiteURL:
+        Value: !GetAtt MyBucket.WebsiteURL
+        Description: URL for website hosted on S3
